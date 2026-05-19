@@ -1,0 +1,88 @@
+{
+  "info": {
+    "name": "Customer Ingestion Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Ingest Customers",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"external_id\": \"cust_001\",\n    \"name\": \"Alice\",\n    \"email\": \"alice@example.com\",\n    \"country_code\": \"US\",\n    \"status_code\": \"ACTIVE\"\n  }\n]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/customers/ingest",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "customers",
+            "ingest"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Dry Run Ingest",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"external_id\": \"dry_001\",\n    \"name\": \"Dry Run\",\n    \"email\": \"dry@example.com\",\n    \"country_code\": \"US\",\n    \"status_code\": \"ACTIVE\"\n  }\n]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/customers/ingest?dryRun=true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "customers",
+            "ingest"
+          ],
+          "query": [
+            {
+              "key": "dryRun",
+              "value": "true"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "actuator",
+            "health"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}

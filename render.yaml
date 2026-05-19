@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: customer-ingestion-service
+    runtime: docker
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: customer-ingestion-db
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: customer-ingestion-db
+          property: port
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: customer-ingestion-db
+          property: database
+      - key: DATABASE_USERNAME
+        fromDatabase:
+          name: customer-ingestion-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: customer-ingestion-db
+          property: password
+      - key: INGESTION_CHUNK_SIZE
+        value: 1000
+
+databases:
+  - name: customer-ingestion-db
+    plan: free

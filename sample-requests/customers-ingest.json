@@ -1,0 +1,23 @@
+[
+  {
+    "external_id": "cust_001",
+    "name": "Alice",
+    "email": "alice@example.com",
+    "country_code": "US",
+    "status_code": "ACTIVE"
+  },
+  {
+    "external_id": "cust_002",
+    "name": "Bob",
+    "email": "bob@example.com",
+    "country_code": "IN",
+    "status_code": "INACTIVE"
+  },
+  {
+    "external_id": "cust_003",
+    "name": "Charlie",
+    "email": "charlie@example.com",
+    "country_code": "UK",
+    "status_code": "ACTIVE"
+  }
+]
