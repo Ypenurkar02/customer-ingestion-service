@@ -63,6 +63,35 @@
       }
     },
     {
+      "name": "Render Ingest Batch With Invalid Lookups",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"external_id\": \"batch_001\",\n    \"name\": \"Batch User 1\",\n    \"email\": \"batch1@test.com\",\n    \"country_code\": \"US\",\n    \"status_code\": \"ACTIVE\"\n  },\n  {\n    \"external_id\": \"batch_002\",\n    \"name\": \"Batch User 2\",\n    \"email\": \"batch2@test.com\",\n    \"country_code\": \"IN\",\n    \"status_code\": \"ACTIVE\"\n  },\n  {\n    \"external_id\": \"batch_003\",\n    \"name\": \"Batch User 3\",\n    \"email\": \"batch3@test.com\",\n    \"country_code\": \"UK\",\n    \"status_code\": \"INACTIVE\"\n  },\n  {\n    \"external_id\": \"batch_004\",\n    \"name\": \"Batch User 4\",\n    \"email\": \"batch4@test.com\",\n    \"country_code\": \"DE\",\n    \"status_code\": \"ACTIVE\"\n  },\n  {\n    \"external_id\": \"batch_005\",\n    \"name\": \"Batch User 5\",\n    \"email\": \"batch5@test.com\",\n    \"country_code\": \"FR\",\n    \"status_code\": \"ACTIVE\"\n  }\n]"
+        },
+        "url": {
+          "raw": "https://customer-ingestion-service.onrender.com/customers/ingest",
+          "protocol": "https",
+          "host": [
+            "customer-ingestion-service",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "customers",
+            "ingest"
+          ]
+        }
+      }
+    },
+    {
       "name": "Health",
       "request": {
         "method": "GET",
