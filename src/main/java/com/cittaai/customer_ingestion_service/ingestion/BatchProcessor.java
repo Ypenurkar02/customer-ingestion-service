@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,8 +29,8 @@ public class BatchProcessor {
             boolean dryRun) {
 
         List<FailedRecord> failedRecords = new ArrayList<>();
-        List<String> duplicateExternalIds = new ArrayList<>();
-        List<IndexedCustomerRecord> validRecords = new ArrayList<>();
+        Set<String> duplicateExternalIds = new LinkedHashSet<>();
+        List<ResolvedCustomer> resolvedCustomers = new ArrayList<>(records.size());
         Set<String> validExternalIds = new LinkedHashSet<>();
         int cacheHits = 0;
 
@@ -67,27 +66,22 @@ public class BatchProcessor {
                 continue;
             }
 
-            validRecords.add(indexedRecord);
             validExternalIds.add(externalId);
-        }
-
-        Set<String> existingExternalIds = deltaDetector.findExistingExternalIds(validExternalIds);
-        List<ResolvedCustomer> customersToInsert = new ArrayList<>();
-
-        for (IndexedCustomerRecord indexedRecord : validRecords) {
-            CustomerIngestionRequest request = indexedRecord.request();
-            String externalId = trimToNull(request.externalId());
-
-            if (existingExternalIds.contains(externalId)) {
-                continue;
-            }
-
-            customersToInsert.add(new ResolvedCustomer(
+            resolvedCustomers.add(new ResolvedCustomer(
                     externalId,
                     trimToNull(request.name()),
                     trimToNull(request.email()),
-                    lookupCache.countriesByCode().get(trimToNull(request.countryCode())),
-                    lookupCache.statusesByCode().get(trimToNull(request.statusCode()))));
+                    countryId,
+                    statusId));
+        }
+
+        Set<String> existingExternalIds = deltaDetector.findExistingExternalIds(validExternalIds);
+        List<ResolvedCustomer> customersToInsert = new ArrayList<>(resolvedCustomers.size());
+
+        for (ResolvedCustomer customer : resolvedCustomers) {
+            if (!existingExternalIds.contains(customer.externalId())) {
+                customersToInsert.add(customer);
+            }
         }
 
         int inserted = dryRun ? customersToInsert.size() : repository.bulkInsertCustomers(customersToInsert);
@@ -99,7 +93,7 @@ public class BatchProcessor {
                 failedRecords.size(),
                 validExternalIds.size(),
                 cacheHits,
-                List.copyOf(new HashSet<>(duplicateExternalIds)),
+                List.copyOf(duplicateExternalIds),
                 List.copyOf(failedRecords));
     }
 

@@ -27,6 +27,12 @@ services:
           property: password
       - key: INGESTION_CHUNK_SIZE
         value: 1000
+      - key: INGESTION_MAX_REPORTED_FAILURES
+        value: 1000
+      - key: INGESTION_MAX_REPORTED_DUPLICATES
+        value: 1000
+      - key: INGESTION_LOOKUP_CACHE_TTL
+        value: 5m
 
 databases:
   - name: customer-ingestion-db

@@ -191,9 +191,12 @@ DATABASE_NAME=customer_ingestion
 DATABASE_USERNAME=customer_ingestion
 DATABASE_PASSWORD=customer_ingestion
 INGESTION_CHUNK_SIZE=1000
+INGESTION_MAX_REPORTED_FAILURES=1000
+INGESTION_MAX_REPORTED_DUPLICATES=1000
+INGESTION_LOOKUP_CACHE_TTL=5m
 ```
 
-The default chunk size is `1000`, which keeps transactions bounded while still allowing large requests such as 100k records to be processed with low database round trips.
+The default chunk size is `1000`, which keeps transactions bounded while still allowing large requests such as 100k records to be processed with low database round trips. Failure and duplicate arrays are capped in the response so a mostly-invalid large request does not create an unbounded response body; total counts still reflect the full request.
 
 ## Render Deployment
 
@@ -209,10 +212,10 @@ Recommended steps:
 
 ## Performance Notes
 
-- Lookup tables are loaded once per request into maps for O(1) lookup resolution.
+- Lookup tables are cached in-process with a short TTL and resolved from maps for O(1) lookup checks.
 - Existing customers are fetched in bulk per chunk, avoiding row-by-row checks.
-- Inserts are batched and protected by `ON CONFLICT DO NOTHING`.
-- Transactions are scoped to chunks rather than the entire request.
+- Inserts are batched, use PostgreSQL JDBC batch rewrite tuning, and are protected by `ON CONFLICT DO NOTHING`.
+- Transactions are scoped to chunks rather than the entire request, so earlier successful chunks remain committed if a later chunk fails unexpectedly.
 - The ingestion path avoids repository save loops and N+1 database access patterns.
 
 ## Future Improvements

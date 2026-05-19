@@ -24,6 +24,9 @@ services:
       DATABASE_USERNAME: customer_ingestion
       DATABASE_PASSWORD: customer_ingestion
       INGESTION_CHUNK_SIZE: 1000
+      INGESTION_MAX_REPORTED_FAILURES: 1000
+      INGESTION_MAX_REPORTED_DUPLICATES: 1000
+      INGESTION_LOOKUP_CACHE_TTL: 5m
     ports:
       - "8080:8080"
     depends_on:

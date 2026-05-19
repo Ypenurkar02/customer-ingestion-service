@@ -1,11 +1,14 @@
 package com.cittaai.customer_ingestion_service.repository;
 
 import com.cittaai.customer_ingestion_service.ingestion.ResolvedCustomer;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
@@ -73,17 +76,22 @@ public class CustomerJdbcRepository {
                 ON CONFLICT (external_id) DO NOTHING
                 """;
 
-        List<Object[]> batchArgs = customers.stream()
-                .map(customer -> new Object[]{
-                        customer.externalId(),
-                        customer.name(),
-                        customer.email(),
-                        customer.countryId(),
-                        customer.statusId()
-                })
-                .toList();
+        int[] counts = jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ResolvedCustomer customer = customers.get(i);
+                ps.setString(1, customer.externalId());
+                ps.setString(2, customer.name());
+                ps.setString(3, customer.email());
+                ps.setObject(4, customer.countryId());
+                ps.setObject(5, customer.statusId());
+            }
 
-        int[] counts = jdbcTemplate.batchUpdate(sql, batchArgs);
+            @Override
+            public int getBatchSize() {
+                return customers.size();
+            }
+        });
 
         int inserted = 0;
         for (int count : counts) {

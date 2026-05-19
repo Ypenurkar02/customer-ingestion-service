@@ -54,6 +54,8 @@ public class CustomerIngestionService {
         int chunksProcessed = 0;
         List<FailedRecord> failedRecords = new ArrayList<>();
         Set<String> duplicateExternalIds = new LinkedHashSet<>();
+        boolean failedRecordsTruncated = false;
+        boolean duplicateExternalIdsTruncated = false;
 
         for (int start = 0; start < safeRequests.size(); start += ingestionProperties.chunkSize()) {
             int end = Math.min(start + ingestionProperties.chunkSize(), safeRequests.size());
@@ -71,8 +73,10 @@ public class CustomerIngestionService {
             failed += chunkResult.failed();
             rowsScanned += chunkResult.rowsScanned();
             cacheHits += chunkResult.cacheHits();
-            failedRecords.addAll(chunkResult.failedRecords());
-            duplicateExternalIds.addAll(chunkResult.duplicateExternalIds());
+            failedRecordsTruncated = addFailuresWithinLimit(failedRecords, chunkResult.failedRecords()) || failedRecordsTruncated;
+            duplicateExternalIdsTruncated =
+                    addDuplicatesWithinLimit(duplicateExternalIds, chunkResult.duplicateExternalIds())
+                            || duplicateExternalIdsTruncated;
         }
 
         long durationMs = Duration.between(startedAt, Instant.now()).toMillis();
@@ -84,7 +88,9 @@ public class CustomerIngestionService {
                 durationMs,
                 dryRun,
                 List.copyOf(duplicateExternalIds),
+                duplicateExternalIdsTruncated,
                 List.copyOf(failedRecords),
+                failedRecordsTruncated,
                 new IngestionMetrics(chunksProcessed, rowsScanned, inserted, cacheHits));
     }
 
@@ -94,5 +100,32 @@ public class CustomerIngestionService {
             chunk.add(new IndexedCustomerRecord(i, requests.get(i)));
         }
         return chunk;
+    }
+
+    private boolean addFailuresWithinLimit(List<FailedRecord> target, List<FailedRecord> source) {
+        int available = ingestionProperties.maxReportedFailures() - target.size();
+        if (available <= 0) {
+            return !source.isEmpty();
+        }
+
+        if (source.size() <= available) {
+            target.addAll(source);
+            return false;
+        }
+
+        target.addAll(source.subList(0, available));
+        return true;
+    }
+
+    private boolean addDuplicatesWithinLimit(Set<String> target, List<String> source) {
+        boolean truncated = false;
+        for (String duplicate : source) {
+            if (target.size() >= ingestionProperties.maxReportedDuplicateExternalIds()) {
+                truncated = true;
+                break;
+            }
+            target.add(duplicate);
+        }
+        return truncated;
     }
 }
