@@ -2,8 +2,6 @@
 
 Production-oriented Spring Boot service for scalable customer delta ingestion with lookup resolution, idempotency, chunk processing, and bulk PostgreSQL writes.
 
-**Submitting to an employer:** use a Git repo whose root is this folder only (not your home directory). See [docs/SUBMISSION.md](docs/SUBMISSION.md) for GitHub + Render steps and a safe `git init` workflow.
-
 ## Assignment Focus
 
 This is not a CRUD application. The service is optimized for ingesting large customer payloads, resolving reference data once per request, comparing incoming records against existing customers in bulk, and inserting only new records.
@@ -191,12 +189,9 @@ DATABASE_NAME=customer_ingestion
 DATABASE_USERNAME=customer_ingestion
 DATABASE_PASSWORD=customer_ingestion
 INGESTION_CHUNK_SIZE=1000
-INGESTION_MAX_REPORTED_FAILURES=1000
-INGESTION_MAX_REPORTED_DUPLICATES=1000
-INGESTION_LOOKUP_CACHE_TTL=5m
 ```
 
-The default chunk size is `1000`, which keeps transactions bounded while still allowing large requests such as 100k records to be processed with low database round trips. Failure and duplicate arrays are capped in the response so a mostly-invalid large request does not create an unbounded response body; total counts still reflect the full request.
+The default chunk size is `1000`, which keeps transactions bounded while still allowing large requests such as 100k records to be processed with low database round trips.
 
 ## Render Deployment
 
@@ -207,15 +202,15 @@ Recommended steps:
 1. Push this repository to GitHub.
 2. In Render, create a new Blueprint from the repository.
 3. Render will provision the web service and PostgreSQL database from `render.yaml`.
-4. After deployment, verify `https://<your-service>.onrender.com/actuator/health`.
-5. Use `https://<your-service>.onrender.com/swagger-ui.html` to interact with the API.
+4. After deployment, verify `https://customer-ingestion-service.onrender.com/actuator/health`.
+5. Use `https://customer-ingestion-service.onrender.com/swagger-ui.html` to interact with the API.
 
 ## Performance Notes
 
-- Lookup tables are cached in-process with a short TTL and resolved from maps for O(1) lookup checks.
+- Lookup tables are loaded once per request into maps for O(1) lookup resolution.
 - Existing customers are fetched in bulk per chunk, avoiding row-by-row checks.
-- Inserts are batched, use PostgreSQL JDBC batch rewrite tuning, and are protected by `ON CONFLICT DO NOTHING`.
-- Transactions are scoped to chunks rather than the entire request, so earlier successful chunks remain committed if a later chunk fails unexpectedly.
+- Inserts are batched and protected by `ON CONFLICT DO NOTHING`.
+- Transactions are scoped to chunks rather than the entire request.
 - The ingestion path avoids repository save loops and N+1 database access patterns.
 
 ## Future Improvements
